@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <style>
+      .submit{
+        width: 100%;
+        background-color: rgb(41, 158, 255);
+        border-radius: 10px;
+        height: 50px;
+      }
+    </style>
+  </head>
+
+<body>
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-6">
+        FirstName : {{user.first_name}}
+      </div>
+      <div class="col-6">
+        LastName : {{user.last_name}}
+      </div>
+      <div class="col-6">
+        Email : {{user.email}}
+      </div>
+      <div class="col-6">
+        BirthDay : {{user.birth_day}}
+      </div>
+      <div class="col-6">
+        <!-- chef -->
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="" id="chef">
+          <label class="form-check-label" for="chef">
+            Chef
+          </label>
+        </div>
+
+        <!-- bartender -->
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="" id="bartender" checked>
+          <label class="form-check-label" for="bartender">
+            Bartender
+          </label>
+        </div>
+
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="" id="perchaser">
+          <label class="form-check-label" for="perchaser">
+            Perchaser
+          </label>
+        </div>
+
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="" id="service" checked>
+          <label class="form-check-label" for="service">
+            Service
+          </label>
+        </div>
+
+      </div>
+      <div class="col-6">
+        <img src="{{ user.img }}" alt="">
+      </div>
+      <div class="col-12">
+        <button class="submit" onclick="btn_submit()">Submit</button>
+      </div>
+    </div>
+    <!-- <h2>Hello {{name}} Please verify email</h2>
+    <hr>
+    <h3>To use with ezzone Application need to verify your email</h3>
+    <h3><a href="http://127.0.0.1:8000/auth/verify/{{ user_id }}/{{token}}">Click here to active your account</a></h3> -->
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+    crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script type="text/javascript">
+    function btn_submit(){
+      var chef = document.getElementById('chef').value
+      var bartender = document.getElementById('bartender').value
+      var service = document.getElementById('service').value
+      var admin = document.getElementById('admin').value
+      var perchaser = document.getElementById('percheser').value
+      const axios = require('axios');
+      axios.put('http://127.0.0.1:8000/user/verify/',{
+        is_chef:chef,
+        is_service:service,
+        is_bartender:bartender,
+        is_purcheser:perchaser,
+        is_admin:admin,
+        is_activate:true,
+        id:'{{user.id}}',
+      })
+    }
+  </script>
+</body>
+
+</html>
