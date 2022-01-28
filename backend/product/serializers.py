@@ -225,9 +225,27 @@ class ItemToppingSerializer(serializers.ModelSerializer):
         read_only_fields = ('item',)
         fields = ['id', 'item', 'total_price','topping', 'qty','topping_set']
 
+class ProductSForPackage(serializers.ModelSerializer):
+
+    # all set
+    priceproduct_set = OnlyPriceProduct(many=True, read_only=True)
+    img = serializers.ImageField(read_only=True)
+
+    class Meta:
+        model = Product
+        fields = [
+            'id', 'img', 'code', 'name',
+            'is_active', 'flavour_level', 'status',
+            'remain', 'flavour', 'minimum', 'maximum',
+            'topping_category', 'warehouse', 'create_at',
+            'update_at', 'priceproduct_set',
+            'unit', 'category', 'create_by',
+            'update_by',
+        ]
+
 
 class PackageItemSerializer(serializers.ModelSerializer):
-    product_set = ProductS(read_only=True,source='product')
+    product_set = ProductSForPackage(read_only=True,source='product')
     itemtopping_set = ItemToppingSerializer(many=True)
     class Meta:
         model = PackageItem
