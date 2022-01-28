@@ -304,11 +304,17 @@ class PackageSerializer(serializers.ModelSerializer):
                 ItemTopping.objects.filter(id=p['id']).update(**p)
         return validated_data
 
+class PackageS(serializers.ModelSerializer):
+    class Meta:
+        model = PromotionPackage
+        fields = '__all__'
+
 class PricePackageForSaleChannel(serializers.ModelSerializer):
+    package_set = PackageS(read_only=True,source='package')
     class Meta:
         model = PricePackage
         fields = ['id', 'discount_price',
-                  'normal_price', 'sale_channel', 'package']
+                  'normal_price', 'sale_channel', 'package', 'package_set']
         read_only_fields = ('sale_channel',)
 
 
