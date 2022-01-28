@@ -12,6 +12,7 @@ urlpatterns = [
     path('package-image/<int:pk>', views.PackageImage().as_view()),
     path('package/', views.PackageAPI().as_view()),
     path('package/<int:pk>', views.PackageDetailAPI().as_view()),
+    path('get-package/<int:pk>', views.GetPackage().as_view()),
     path('package-pos/<int:pk>', views.getPackagePOS().as_view()),
     path('package-by-sale-channel/<int:pk>', views.PackageBySaleChannel().as_view()),
     path('reward/', views.RewardAPI().as_view()),

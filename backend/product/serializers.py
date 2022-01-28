@@ -208,6 +208,17 @@ class SaleChannelS(serializers.ModelSerializer):
                   'status', 'create_by', 'update_by',
                   'create_at', 'update_at',
                   ]
+class ToppingSForPackage(serializers.ModelSerializer):
+    pricetopping_set = PriceToppingSerializer(read_only=True,many=True)
+    class Meta:
+        model = Topping
+        fields = [
+            'id', 'img', 'code', 'name', 'is_active', 'status',
+            'remain', 'minimum', 'maximum', 'type_topping', 'warehouse', 'create_at',
+            'unit', 'create_by',
+            'update_by',
+            'pricetopping_set'
+        ]
 
 
 class PricePackageSerializer(serializers.ModelSerializer):
@@ -219,7 +230,7 @@ class PricePackageSerializer(serializers.ModelSerializer):
 
 
 class ItemToppingSerializer(serializers.ModelSerializer):
-    topping_set = ToppingS(read_only=True,source='topping')
+    topping_set = ToppingSForPackage(read_only=True,source='topping')
     class Meta:
         model = ItemTopping
         read_only_fields = ('item',)

@@ -182,10 +182,19 @@ class PackageDetailAPI(APIView):
             return Response(serializer.data,status=200)
         return Response(serializer.errors,status=400)
 
-    parser_classes = []
+    # parser_classes = [FormParser, MultiPartParser]
+
     def get(self, request,pk):
         package = PromotionPackage.objects.get(pk=pk)
         serializer = PackageSerializer(package)
+        return Response(serializer.data,status=200)
+
+class GetPackage(APIView):
+    parser_classes = [FormParser, MultiPartParser]
+
+    def get(self, request,pk):
+        package = PromotionPackage.objects.get(pk=pk)
+        serializer = PackageSerializer(package,context={'request':request})
         return Response(serializer.data,status=200)
 
 class RewardAPI(APIView):
