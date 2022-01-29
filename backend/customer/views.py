@@ -88,15 +88,21 @@ class GetCustomer(APIView):
     
     def get_favorite_menu(self, pk):
         orders_id = [order.id for order in Order.objects.filter(customer_id=pk)]
-        order_items = OrderItem.objects.filter(order_id__in=orders_id)
+        product = OrderItem.objects.filter(order_id__in=orders_id).exclude(product_id=None)
+        pack = OrderItem.objects.filter(order_id__in=orders_id).exclude(package_id=None)
+        top = OrderItem.objects.filter(order_id__in=orders_id).exclude(topping_id=None)
+        print(product,'product')
+        print(pack,'pack')
+        print(top,'top')
         products = {}
-        for i in order_items:
+        for i in product:
             if not products.get(i.product_id):
                 products[i.product_id] = i.amount
             else:
                 products[i.product_id] += i.amount
         products = dict(sorted(products.items(), key=lambda item: item[1], reverse=True))
         top_products = []
+        print(products)
         for i in products.keys():
             product = Product.objects.get(id=i)
             serializer = ProductS(product)
@@ -121,15 +127,8 @@ class GetCustomer(APIView):
         else:
             data['point'] = 0
             data['total_promotion'] = 0 
-        orders = [order for order in Order.objects.filter(customer_id=pk)]
         customer = self.get_object(pk)
         data['customer'] = CustomerSerializer(customer, context={"request": request}).data
-        if len(orders) != 0:
-            data['customer']['date_joined'] = orders[0].create_at
-            data['customer']['last_joined'] = orders[-1].create_at
-        else:
-            data['customer']['date_joined'] = 'xxxx-xx-xx'
-            data['customer']['last_joined'] = 'xxxx-xx-xx'
         data['total_price'] = Order.objects.filter(customer_id=pk).aggregate(Sum('total_balance'))['total_balance__sum']
         data['top_products'] = self.get_favorite_menu(pk)
         return Response(data, status=200)
