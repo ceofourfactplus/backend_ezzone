@@ -71,6 +71,9 @@ class ReceiptRawMaterialDetail(APIView):
             return ReceiptRawMaterialDetail.objects.get(pk=pk)
         except ReceiptRawMaterialDetail.DoesNotExist:
             raise 404
+        
+    def find_avg(self, avg, item, idx):
+        return ((avg * idx) + item.last_price) / (idx + 1)
 
     def get(self, request):
         recept_raw_material = ReceiptRawMaterialDetail.objects.all()
@@ -79,8 +82,24 @@ class ReceiptRawMaterialDetail(APIView):
         return Response(serializer.data)
 
     def post(self, request):
-        request.data['remain'] = 0
         print(request.data, 'receipt detail data')
+        avg = 0
+        rm = RawMaterial.objects.get(id=request.data['raw_material_id'])
+        rm.remain += request.data['amount']
+        rm.save() 
+        prm = PriceRawMaterial.objects.filter(raw_material_id=request.data['raw_material_id'])
+        for i in range(len(prm)):
+            avg = self.find_avg(avg, prm[i], i)
+        po = PO.objects.get(id=request.data['po_id'])
+        po.status = False
+        po.save()
+        PriceRawMaterial.objects.create(
+            avg_price=round(((avg * len(prm)) + int(float(request.data['price']))) / (len(prm) + 1), 2),
+            last_price=request.data['price'],
+            raw_material_id=request.data['raw_material_id'],
+            unit_id=request.data['unit_id'],
+            supplier_id=request.data['supplier_id']
+        )
         serializer = ReceiptRawMaterialDetailSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -441,6 +460,8 @@ class POList(APIView):
 
 
 class PONotice(APIView):
+    parser_classes = [MultiPartParser, FormParser]
+    
     def get(self, request):
         id_list = []
         rm_list = []
@@ -457,7 +478,7 @@ class PONotice(APIView):
         for i in id_list:
             rm_list.append(PriceRawMaterial.objects.filter(
                 raw_material_id=i)[0])
-        serializer = PriceRawMaterialSerializer(rm_list, many=True)
+        serializer = PriceRawMaterialSerializer(rm_list, context={'request': request}, many=True)
         # for item in RawMaterials:
         #     print(item.id, item.unit_l_id)
         #     price_rm = PriceRawMaterial.objects.filter(raw_material_id = item.id, unit_id=item.unit_l_id)

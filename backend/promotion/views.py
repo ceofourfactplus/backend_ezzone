@@ -376,6 +376,8 @@ class CustomerPointAPI(APIView):
 
 
 class ExchangeHistoryAPI(APIView):
+    parser_classes = [FormParser, MultiPartParser]
+    
     def get_object(self, pk):
         try:
             return ExchangeHistory.objects.get(customer_id=pk)
@@ -384,7 +386,7 @@ class ExchangeHistoryAPI(APIView):
 
     def get(self, request):
         exchange_history = ExchangeHistory.objects.all()
-        serializer = ExchangeHistorySerializer(exchange_history, many=True)
+        serializer = ExchangeHistorySerializer(exchange_history, context={'request': request}, many=True)
         return Response(serializer.data)
 
     def put(self, request):
@@ -400,6 +402,7 @@ class ExchangeHistoryAPI(APIView):
         print(request.data)
         reward = Rewards.objects.get(id=request.data['reward_id'])
         reward.qty -= 1
+        reward.is_pre_order = bool(request.data['is_pre_order'])
         reward.save()
         customer = CustomerPoint.objects.get(
             customer_id=request.data['customer_id'])
@@ -429,6 +432,11 @@ class ExchangeHistoryGET(APIView):
                 data.append(serializer.data)
         return Response(data)
 
+    def put(self, request, pk):
+        reward = Rewards.objects.get(id=pk)
+        reward.is_pre_order = bool(request.data['is_pre_order'])
+        reward.save()
+        return Response('serializer.data')
 
 class DBS(APIView):
     def get(self, request):
