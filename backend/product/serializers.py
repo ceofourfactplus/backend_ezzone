@@ -331,7 +331,7 @@ class PackageSerializer(serializers.ModelSerializer):
             for p in to_be_update_topping:
                 print(p, 'p')
                 ItemTopping.objects.filter(id=p['id']).update(**p)
-        return validated_data
+        return instance
 
 class PackageS(serializers.ModelSerializer):
     class Meta:
