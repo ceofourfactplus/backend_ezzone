@@ -1,4 +1,3 @@
-from sqlite3 import apilevel
 from pos.models import Order
 from django.db.models import F,OuterRef,Exists,Count
 import os
@@ -12,7 +11,7 @@ from product.serializers import (PriceProductSerializer,
                                  PriceToppingSerializer,
                                  ProductCategorySerializer, ProductSerializer,
                                  SaleChannelSerializer,
-                                 SaleChannelS,
+                                 SaleChannelS,ToppingCategoryCreateS,
                                  ProductSerializer, ToppingSerializer, ToppingCategorySerializer, UpdateImageSaleS, ImageTopping, ImageProduct)
 
 from .forms import *
@@ -149,21 +148,25 @@ class ToppingCategoryList(APIView):
     def get(self, request):
         category = ToppingCategory.objects.all()
         serializer = ToppingCategorySerializer(
-            category, context={"request": request}, many=True)
+            category,context={'request': request}, many=True)
         return Response(serializer.data)
-
+        
     def post(self, request):
         if not ToppingCategory.objects.filter(category=request.data['category']).exists():
             serializer = ToppingCategorySerializer(data=request.data)
             if serializer.is_valid():
                 serializer.save()
-                for top_id in request.data['select_topping']:
-                    if(not top_id == ','):
-                        SetTopping.objects.create(
-                            topping_id=top_id,
-                            category_id=serializer.data['id']
-                        )
-                return Response(serializer.data, status=201)
+                return Response('ok', status=201)
+            return Response(serializer.errors, status=400)
+        return Response('this caetgory name is already in use', status=400)
+
+class CreateToppingCategory(APIView):
+    def post(self, request):
+        if not ToppingCategory.objects.filter(category=request.data['category']).exists():
+            serializer = ToppingCategoryCreateS(data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response('ok', status=201)
             return Response(serializer.errors, status=400)
         return Response('this caetgory name is already in use', status=400)
 

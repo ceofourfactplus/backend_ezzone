@@ -1,5 +1,6 @@
 import datetime
 from os import read
+from re import T
 from django.db.models import fields
 from rest_framework import serializers
 from product.models import ProductCategory, SaleChannel, Product, PriceProduct, SetTopping, ToppingCategory, Topping, PriceTopping
@@ -8,12 +9,14 @@ from user.serializers import UserSerializer
 from pprint import pprint
 from promotion.models import PricePackage, PromotionPackage
 from promotion.serializers import PackageListSerializer
-from promotion.models import PackageItem, PromotionPackage,ItemTopping
+from promotion.models import PackageItem, PromotionPackage, ItemTopping
+
 
 class PricePackageS(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False)
     package_set = PackageListSerializer()
-    class Meta: 
+
+    class Meta:
         model = PricePackage
         fields = [
             'id',
@@ -25,9 +28,11 @@ class PricePackageS(serializers.ModelSerializer):
         ]
         read_only_fields = ('package',)
 
+
 class PricePackageSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False)
     packages = PackageListSerializer(read_only=True)
+
     class Meta:
         model = PricePackage
         fields = [
@@ -91,6 +96,7 @@ class ProductS(serializers.ModelSerializer):
     update_by_id = serializers.IntegerField(allow_null=True, required=False)
     topping_category_id = serializers.IntegerField(
         allow_null=True, required=False)
+
     class Meta:
         model = Product
         fields = [
@@ -172,7 +178,7 @@ class ToppingSerializer(serializers.ModelSerializer):
 
 
 class SetToppingSerializer(serializers.ModelSerializer):
-    topping_set = ToppingSerializer(read_only=True, source="topping")
+    topping_set = ToppingSerializer(read_only=True, source='topping')
 
     class Meta:
         model = SetTopping
@@ -188,6 +194,28 @@ class ToppingCategorySerializer(serializers.ModelSerializer):
                   'create_by', 'update_by', 'settopping_set']
 
 
+class SetToppingCreateS(serializers.ModelSerializer):
+    category = serializers.IntegerField(required=False)
+    class Meta:
+        model = SetTopping
+        fields = ['id','category', 'topping']
+
+
+class ToppingCategoryCreateS(serializers.ModelSerializer):
+    settopping_set = SetToppingCreateS(many=True)
+
+    class Meta:
+        model = ToppingCategory
+        fields = ['id', 'category',
+                  'create_by', 'update_by', 'settopping_set']
+    def create(self, validated_data):
+        toppings = validated_data.pop('settopping_set')
+        cate = ToppingCategory.objects.create(**validated_data)
+        for topping in toppings:
+            SetTopping.objects.create(**topping,category=cate)
+        return cate
+
+
 class GetterSaleChannel(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False)
     img = serializers.ImageField(read_only=True)
@@ -197,6 +225,7 @@ class GetterSaleChannel(serializers.ModelSerializer):
         fields = ['id', 'sale_channel', 'gp', 'img',
                   'status', 'create_by', 'update_by',
                   'create_at', 'update_at']
+
 
 class SaleChannelS(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False)
@@ -208,8 +237,11 @@ class SaleChannelS(serializers.ModelSerializer):
                   'status', 'create_by', 'update_by',
                   'create_at', 'update_at',
                   ]
+
+
 class ToppingSForPackage(serializers.ModelSerializer):
-    pricetopping_set = PriceToppingSerializer(read_only=True,many=True)
+    pricetopping_set = PriceToppingSerializer(read_only=True, many=True)
+
     class Meta:
         model = Topping
         fields = [
@@ -230,11 +262,13 @@ class PricePackageSerializer(serializers.ModelSerializer):
 
 
 class ItemToppingSerializer(serializers.ModelSerializer):
-    topping_set = ToppingSForPackage(read_only=True,source='topping')
+    topping_set = ToppingSForPackage(read_only=True, source='topping')
+
     class Meta:
         model = ItemTopping
         read_only_fields = ('item',)
-        fields = ['id', 'item', 'total_price','topping', 'qty','topping_set']
+        fields = ['id', 'item', 'total_price', 'topping', 'qty', 'topping_set']
+
 
 class ProductSForPackage(serializers.ModelSerializer):
 
@@ -256,12 +290,13 @@ class ProductSForPackage(serializers.ModelSerializer):
 
 
 class PackageItemSerializer(serializers.ModelSerializer):
-    product_set = ProductSForPackage(read_only=True,source='product')
+    product_set = ProductSForPackage(read_only=True, source='product')
     itemtopping_set = ItemToppingSerializer(many=True)
+
     class Meta:
         model = PackageItem
         fields = ['id', 'qty', 'total_price', 'package',
-                  'description', 'product', 'itemtopping_set','product_set']
+                  'description', 'product', 'itemtopping_set', 'product_set']
         read_only_fields = ('package',)
 
 
@@ -333,13 +368,16 @@ class PackageSerializer(serializers.ModelSerializer):
                 ItemTopping.objects.filter(id=p['id']).update(**p)
         return instance
 
+
 class PackageS(serializers.ModelSerializer):
     class Meta:
         model = PromotionPackage
         fields = '__all__'
 
+
 class PricePackageForSaleChannel(serializers.ModelSerializer):
-    package_set = PackageS(read_only=True,source='package')
+    package_set = PackageS(read_only=True, source='package')
+
     class Meta:
         model = PricePackage
         fields = ['id', 'discount_price',
@@ -350,7 +388,8 @@ class PricePackageForSaleChannel(serializers.ModelSerializer):
 class SaleChannelSerializer(serializers.ModelSerializer):
     price_topping = PriceToppingSerializer(many=True, source="pricetopping")
     price_product = PriceProductSerializer(many=True, source="priceproduct")
-    price_package = PricePackageForSaleChannel(many=True,source="pricepackage_set")
+    price_package = PricePackageForSaleChannel(
+        many=True, source="pricepackage_set")
     id = serializers.IntegerField(required=False)
     img = serializers.ImageField(read_only=True)
     can_delete = serializers.BooleanField(read_only=True, required=False)
@@ -360,7 +399,7 @@ class SaleChannelSerializer(serializers.ModelSerializer):
         model = SaleChannel
         fields = ['id', 'sale_channel', 'gp', 'img',
                   'status', 'create_by', 'update_by',
-                  'create_at', 'update_at', 'price_topping', 'price_product', 
+                  'create_at', 'update_at', 'price_topping', 'price_product',
                   'price_package', 'can_delete',
                   'qty'
                   ]

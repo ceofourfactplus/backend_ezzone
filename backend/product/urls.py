@@ -11,6 +11,7 @@ urlpatterns = [
     path('product-by-type/<int:type>', views.ProductByType.as_view()),
     path('category-by-type/<int:type>', views.CategoryByType.as_view()),
     path('topping/category/', views.ToppingCategoryList.as_view()),
+    path('create-topping/category/', views.CreateToppingCategory.as_view()),
     path('topping/category/<int:pk>', views.ToppingCategoryDetail.as_view()),
     path('category/status/<int:pk>/', views.ProductCategoryStatus.as_view()),
     path('category/get-amount-product/<int:category_id>', views.AmountPorduct.as_view()),

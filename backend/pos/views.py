@@ -365,8 +365,11 @@ class OrderList(APIView):
             request.data['address_id'] = None
         else:  # check is has customer in data
             if Customer.objects.filter(phone_number=request.data['phone_number']).exists():
-                request.data['customer_id'] = Customer.objects.get(
-                    phone_number=request.data['phone_number']).id
+                cus = Customer.objects.get(
+                    phone_number=request.data['phone_number'])
+                request.data['customer_id'] = cus.id
+                cus.last_joined = datetime.now()
+                cus.save()
                 if not(request.data['point_promotion_id'] == None ):
                     if CustomerPoint.objects.filter(customer_id=request.data['customer_id'],point_promotion_id=request.data['point_promotion_id']).exists():
                         cus_point = CustomerPoint.objects.get(customer_id=request.data['customer_id'],point_promotion_id=request.data['point_promotion_id'])
