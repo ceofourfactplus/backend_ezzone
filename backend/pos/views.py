@@ -725,9 +725,21 @@ class ReportDaily (APIView):
 class ReportFilterByDate (APIView):
     parser_classes = [FormParser, MultiPartParser]
 
-    def get(self, request, year, month, date):
+    def post(self, request):
+        print(request.data, 'report request')
         order = Order.objects.filter(
-            create_at__gte=datetime(year, month, date))
+            create_at__gte=datetime(
+                int(request.data['year_from']),
+                int(request.data['month_from']),
+                int(request.data['day_from'])
+            )
+        ).filter(
+            create_at__lte=datetime(
+                int(request.data['year_to']),
+                int(request.data['month_to']),
+                int(request.data['day_to'])
+            )
+        )
         order_id_list = [item.id for item in order]
         report = order.aggregate(Sum('total_balance'), Sum('discount'))
         report['total_order'] = order.count()
