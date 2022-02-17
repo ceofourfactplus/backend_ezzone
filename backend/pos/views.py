@@ -492,6 +492,24 @@ class OrderDetail(APIView):
         return Response(status=204)
 
 
+class TempOrderItemList(APIView):
+    def get(self, request):
+        orders = OrderItem.objects.all()
+        serializer = OrderItemSerializer(orders, many=True)
+        product_combined = {}
+        products = []
+        for i in serializer.data:
+            print(i)
+        # for i in orders:
+        #     if product_combined.get(i.product_id):
+        #         product_combined[i.product_id].amount += i.amount
+        #     else:
+        #         product_combined[i.product_id] = i
+        #     print(product_combined)
+        # for i in product_combined:
+        #     products.append(product_combined[i])
+        return Response(serializer.data)
+
 class OrderItemList(APIView):
     def get(self, request):
         Orders = OrderItem.objects.all()
