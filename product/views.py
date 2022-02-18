@@ -322,7 +322,7 @@ class SaleChannelEzzone(APIView):
             ezzone = SaleChannel.objects.get(sale_channel='EZ Zone').id
         except SaleChannel.DoesNotExist:
             ezzone = SaleChannel.objects.create(sale_channel='EZ Zone',gp=0,create_by_id=User.objects.all()[0].id).id
-        return Response({'id': ezzone.id}, status=200)
+        return Response({'id': ezzone}, status=200)
 
 class ReadOnlySalesChannel(APIView):
     parser_classes = [MultiPartParser, FormParser]
