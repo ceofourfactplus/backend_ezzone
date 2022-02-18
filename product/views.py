@@ -1,4 +1,5 @@
 from pos.models import Order
+from user.models import User
 from django.db.models import F,OuterRef,Exists,Count
 import os
 from rest_framework.parsers import FormParser, MultiPartParser
@@ -201,7 +202,10 @@ class ToppingList(APIView):
             serializer = ToppingSerializer(data=request.data)
             if serializer.is_valid():
                 serializer.save()
-                ezzone = SaleChannel.objects.get(sale_channel='EZ Zone').id
+                try:
+                    ezzone = SaleChannel.objects.get(sale_channel='EZ Zone').id
+                except SaleChannel.DoesNotExist:
+                    ezzone = SaleChannel.objects.create(sale_channel='EZ Zone',gp=0,create_by_id=User.objects.all()[0].id).id
                 PriceTopping.objects.create(
                     sale_channel_id=ezzone,
                     topping_id=serializer.data['id'],
@@ -255,7 +259,10 @@ class ToppingDetail(APIView):
         serializer = ToppingSerializer(sale_channel, data=request.data)
         if serializer.is_valid():
             serializer.save()
-            ezzone = SaleChannel.objects.get(sale_channel='EZ Zone').id
+            try:
+                ezzone = SaleChannel.objects.get(sale_channel='EZ Zone').id
+            except SaleChannel.DoesNotExist:
+                    ezzone = SaleChannel.objects.create(sale_channel='EZ Zone',gp=0,create_by_id=User.objects.all()[0].id).id
             if PriceTopping.objects.filter(topping_id=serializer.data['id'], sale_channel_id=ezzone).exists():
                 price = PriceTopping.objects.get(
                     topping_id=serializer.data['id'], sale_channel_id=ezzone)
@@ -311,7 +318,10 @@ class ToppingCategoryDetail(APIView):
 
 class SaleChannelEzzone(APIView):
     def get(self, request):
-        ezzone = SaleChannel.objects.get(sale_channel='EZ Zone')
+        try:
+            ezzone = SaleChannel.objects.get(sale_channel='EZ Zone').id
+        except SaleChannel.DoesNotExist:
+            ezzone = SaleChannel.objects.create(sale_channel='EZ Zone',gp=0,create_by_id=User.objects.all()[0].id).id
         return Response({'id': ezzone.id}, status=200)
 
 class ReadOnlySalesChannel(APIView):
@@ -488,7 +498,10 @@ class UpdateProduct(APIView):
         serializer = ProductSerializer(object, data=request.data)
         if serializer.is_valid():
             serializer.save()
-            ezzone = SaleChannel.objects.get(sale_channel='EZ Zone').id
+            try:
+                ezzone = SaleChannel.objects.get(sale_channel='EZ Zone').id
+            except SaleChannel.DoesNotExist:
+                ezzone = SaleChannel.objects.create(sale_channel='EZ Zone',gp=0,create_by_id=User.objects.all()[0].id).id
             if PriceProduct.objects.filter(product_id=serializer.data['id'], sale_channel_id=ezzone).exists():
                 price = PriceProduct.objects.get(
                     product_id=serializer.data['id'], sale_channel_id=ezzone)
