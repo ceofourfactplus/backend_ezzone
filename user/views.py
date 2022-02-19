@@ -1,8 +1,7 @@
 from xml.etree.ElementTree import tostring
 import pytz
-from pytz import timezone
-from datetime import date, datetime
-from venv import create
+import datetime as dt
+from datetime import datetime
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .serializers import UserSerializer, LoginSerializer
@@ -131,8 +130,7 @@ class Logout(APIView):
         try:
             login = Login.objects.get(token=token)
             login.logout_at = datetime.now()
-            print(str(login.logout_at.replace(
-                tzinfo=pytz.UTC) - login.login_at))
+            login.time_login = str(login.logout_at.replace(tzinfo=pytz.UTC) - login.login_at)
             login.save()
             return Response('logout', status=200)
         except login.DoesNotExist:
@@ -140,15 +138,31 @@ class Logout(APIView):
 
 
 class WorkHoursSelectedTime(APIView):
-    def get(self, request):
-        print(request.data)
+    def get(self, request,start_date,end_date):
         work_hours = Login.objects.filter(
-            login_at__gte=request.data['start_date'])
-        # for i in work_hours:
+            login_at__gte=start_date,logout_at__lte=end_date)
+        all_user_login = []
+        data = []
 
-        serializer = LoginSerializer(work_hours, many=True)
-        return Response(serializer.data, status=200)
-        # return Response('hello',status=200)
+        for item in work_hours:
+            if item.user not in all_user_login:
+                all_user_login.append(item.user)
+        print(work_hours[0])
+        for user in all_user_login:
+            mysum = dt.timedelta()
+            user_login = [item for item in work_hours if item.user_id == user.id]
+            print(user_login)
+            for item in user_login:
+                (h, m, s) = str(item.time_login)[0:8].split(':')
+                d = dt.timedelta(hours=int(h), minutes=int(m), seconds=int(s))
+                mysum += d
+                print(str(mysum))
+            # print(str(mysum))
+            data.append({
+                "user": user.nick_name,
+                "time_login": str(mysum)
+            })
+        return Response(data, status=200)
 
 
 class WorkHours(APIView):
