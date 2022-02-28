@@ -9,7 +9,7 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from pprint import pprint
 from product.models import Product, SaleChannel, Topping
-from product.serializers import ProductReportSerialiser, ChannelReportSerializer
+from product.serializers import ProductReportSerialiser, ChannelReportSerializer, ProductS
 from datetime import datetime
 from promotion.models import PackageItem, PromotionPackage,CustomerPoint
 
@@ -881,14 +881,93 @@ class ReportMonth (APIView):
         return Response(report, status=200)
 
 
+class ReportProductDetail (APIView):
+    parser_classes = [FormParser, MultiPartParser]
+    
+    def id_of_products_sorted(self, arr):
+        products = {}
+        all_price = []
+        for i in arr:
+            if not products.get(i.product_id):
+                products[i.product_id] = i.price_item
+            else:
+                products[i.product_id] += i.price_item
+        products = dict(sorted(products.items(), key=lambda item: item[1], reverse=True))
+        id_list = [i for i in products.keys()]
+        print('products', products)
+        top_data = []
+        for i in id_list:
+            serializer = ProductS(Product.objects.get(id=i))
+            all_price.append(int(products[i]))
+            print('prod', i, products)
+            print(type(serializer.data))
+            print('serializer', serializer.data)
+            top_data.append(serializer.data)
+        return {'top_products': top_data, 'all_price': all_price}
+
+    def post(self, request):
+        print('request',request.data)
+        order = Order.objects.filter(
+            create_at__gte=datetime(
+                int(request.data['year_from']),
+                int(request.data['month_from']),
+                int(request.data['day_from'])
+            )
+        ).filter(
+            create_at__lte=datetime(
+                int(request.data['year_to']),
+                int(request.data['month_to']),
+                int(request.data['day_to'])
+            )
+        )
+        order_id_list = [item.id for item in order]
+        report = {}
+
+        # find top 10 food and total_price_drink
+
+        filter_product = [
+            product.id for product in Product.objects.filter(type_product=request.data['type_product'])]
+        all_product = OrderItem.objects.filter(
+            product_id__in=filter_product, order_id__in=order_id_list)
+        report = self.id_of_products_sorted(all_product)
+
+        return Response(report, status=200)
+
 class ReportAllProduct (APIView):
     parser_classes = [FormParser, MultiPartParser]
+    
+    def id_of_products_sorted(self, request, arr):
+        products = {}
+        for i in arr:
+            if not products.get(i.product_id):
+                products[i.product_id] = i.amount
+            else:
+                products[i.product_id] += i.amount
+        products = dict(sorted(products.items(), key=lambda item: item[1], reverse=True))
+        id_list = [i for i in products.keys()]
+        top_data = []
+        for i in id_list[:10]:
+            top_data.append(Product.objects.get(id=i))
+        return ProductReportSerialiser(top_data, context={'request': request}, many=True).data
 
-    def get(self, request):
-        now = datetime.now()
+    def post(self, request):
+        # now = datetime.now()
         # order = Order.objects.filter(
         #     create_at__gte=datetime(now.year,now.month,1))
-        order = Order.objects.all()
+        print('request',request.data)
+        order = Order.objects.filter(
+            create_at__gte=datetime(
+                int(request.data['year_from']),
+                int(request.data['month_from']),
+                int(request.data['day_from'])
+            )
+        ).filter(
+            create_at__lte=datetime(
+                int(request.data['year_to']),
+                int(request.data['month_to']),
+                int(request.data['day_to'])
+            )
+        )
         order_id_list = [item.id for item in order]
         report = {}
 
@@ -898,12 +977,7 @@ class ReportAllProduct (APIView):
             product.id for product in Product.objects.filter(type_product=3)]
         all_food = OrderItem.objects.filter(
             product_id__in=filter_food, order_id__in=order_id_list)
-        top_food = all_food.annotate(frequency=Count('product_id')).order_by(
-            'frequency').values('product_id').distinct()[:10]
-        list_food = [t['product_id'] for t in top_food]
-        top_product_data = Product.objects.filter(id__in=list_food)
-        report['top_food'] = ProductReportSerialiser(
-            top_product_data, context={'request': request}, many=True).data
+        report['top_food'] = self.id_of_products_sorted(request, all_food)
         report['total_price_food'] = all_food.aggregate(
             Sum('total_price'))['total_price__sum']
 
@@ -912,12 +986,7 @@ class ReportAllProduct (APIView):
             product.id for product in Product.objects.filter(type_product=2)]
         all_drink = OrderItem.objects.filter(
             product_id__in=filter_drink, order_id__in=order_id_list)
-        top_drink = all_drink.annotate(frequency=Count('product_id')).order_by(
-            'frequency').values('product_id').distinct()[:10]
-        list_drink = [t['product_id'] for t in top_drink]
-        top_drink_data = Product.objects.filter(id__in=list_drink)
-        report['top_drink'] = ProductReportSerialiser(
-            top_drink_data, context={'request': request}, many=True).data
+        report['top_drink'] = self.id_of_products_sorted(request, all_drink)
         report['total_price_drink'] = all_drink.aggregate(Sum('total_price'))[
             'total_price__sum']
 
@@ -926,12 +995,7 @@ class ReportAllProduct (APIView):
             product.id for product in Product.objects.filter(type_product=1)]
         all_dressert = OrderItem.objects.filter(
             product_id__in=filter_dressert, order_id__in=order_id_list)
-        top_dressert = all_dressert.annotate(frequency=Count('product_id')).order_by(
-            'frequency').values('product_id').distinct()[:10]
-        list_dressert = [t['product_id'] for t in top_dressert]
-        top_dressert_data = Product.objects.filter(id__in=list_dressert)
-        report['top_dressert'] = ProductReportSerialiser(
-            top_dressert_data, context={'request': request}, many=True).data
+        report['top_dressert'] = self.id_of_products_sorted(request, all_dressert)
         report['total_price_dressert'] = all_dressert.aggregate(Sum('total_price'))[
             'total_price__sum']
 

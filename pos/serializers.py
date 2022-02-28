@@ -137,6 +137,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         orderitem_set = validated_data.pop('orderitem_set')
+        print(validated_data, 'validated_data')
         order = Order.objects.create(**validated_data)
         for item in orderitem_set:
             have_topping = False
@@ -145,6 +146,7 @@ class OrderSerializer(serializers.ModelSerializer):
                 if not orderitemtopping_set == []:
                     have_topping = True
                 print(orderitemtopping_set)
+                print('item', item)
             order_item = OrderItem.objects.create(**item, order=order)
             if have_topping:
                 for topping in orderitemtopping_set:
