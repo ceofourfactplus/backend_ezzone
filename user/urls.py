@@ -10,6 +10,5 @@ urlpatterns = [
   path('search-name/<str:qury>', views.SearchName.as_view()), 
   path('edit-user/<int:pk>',views.EditUser.as_view()),
   path('change-status/<int:pk>/<int:status>', views.ChangeStatus.as_view()),
-  path('work-hours/day', views.WorkHours.as_view()),
-  path('work-hours/selected-time/',views.WorkHoursSelectedTime.as_view()),
+  path('work-hours/<str:start_date>/<str:end_date>',views.WorkHoursSelectedTime.as_view()),
 ]
