@@ -889,19 +889,16 @@ class ReportProductDetail (APIView):
         all_price = []
         for i in arr:
             if not products.get(i.product_id):
-                products[i.product_id] = i.price_item
+                products[i.product_id] = i.price_item*i.amount
             else:
-                products[i.product_id] += i.price_item
+                products[i.product_id] += i.price_item*i.amount
+        print(products)
         products = dict(sorted(products.items(), key=lambda item: item[1], reverse=True))
         id_list = [i for i in products.keys()]
-        print('products', products)
         top_data = []
         for i in id_list:
             serializer = ProductS(Product.objects.get(id=i))
             all_price.append(int(products[i]))
-            print('prod', i, products)
-            print(type(serializer.data))
-            print('serializer', serializer.data)
             top_data.append(serializer.data)
         return {'top_products': top_data, 'all_price': all_price}
 
@@ -939,10 +936,12 @@ class ReportAllProduct (APIView):
     def id_of_products_sorted(self, request, arr):
         products = {}
         for i in arr:
+            print(f'amo {i.product_id} ,', i.amount)
             if not products.get(i.product_id):
                 products[i.product_id] = i.amount
             else:
                 products[i.product_id] += i.amount
+        print(products)
         products = dict(sorted(products.items(), key=lambda item: item[1], reverse=True))
         id_list = [i for i in products.keys()]
         top_data = []
@@ -951,10 +950,6 @@ class ReportAllProduct (APIView):
         return ProductReportSerialiser(top_data, context={'request': request}, many=True).data
 
     def post(self, request):
-        # now = datetime.now()
-        # order = Order.objects.filter(
-        #     create_at__gte=datetime(now.year,now.month,1))
-        print('request',request.data)
         order = Order.objects.filter(
             create_at__gte=datetime(
                 int(request.data['year_from']),
