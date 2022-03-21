@@ -941,15 +941,16 @@ class ReportAllProduct (APIView):
                 products[i.product_id] = i.amount
             else:
                 products[i.product_id] += i.amount
-        print(products)
         products = dict(sorted(products.items(), key=lambda item: item[1], reverse=True))
         id_list = [i for i in products.keys()]
         top_data = []
         for i in id_list[:10]:
             top_data.append(Product.objects.get(id=i))
+        print(top_data)
         return ProductReportSerialiser(top_data, context={'request': request}, many=True).data
 
     def post(self, request):
+        print('request', request.data)  
         order = Order.objects.filter(
             create_at__gte=datetime(
                 int(request.data['year_from']),
