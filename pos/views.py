@@ -892,13 +892,31 @@ class ReportProductDetail (APIView):
                 products[i.product_id] = i.price_item*i.amount
             else:
                 products[i.product_id] += i.price_item*i.amount
-        print(products)
+        print('products',products)
         products = dict(sorted(products.items(), key=lambda item: item[1], reverse=True))
         id_list = [i for i in products.keys()]
         top_data = []
         for i in id_list:
             serializer = ProductS(Product.objects.get(id=i))
             all_price.append(int(products[i]))
+            top_data.append(serializer.data)
+        return {'top_products': top_data, 'all_price': all_price}
+
+    def id_of_topping_sorted(self, arr):
+        toppings = {}
+        all_price = []
+        for i in arr:
+            if not toppings.get(i.topping_id):
+                toppings[i.topping_id] = i.price_topping*i.amount
+            else:
+                toppings[i.topping_id] += i.price_topping*i.amount
+        print('toppings',toppings)
+        toppings = dict(sorted(toppings.items(), key=lambda item: item[1], reverse=True))
+        id_list = [i for i in toppings.keys()]
+        top_data = []
+        for i in id_list:
+            serializer = OrderItemToppingSerializer(OrderItemTopping.objects.get(id=i))
+            all_price.append(int(toppings[i]))
             top_data.append(serializer.data)
         return {'top_products': top_data, 'all_price': all_price}
 
@@ -919,14 +937,21 @@ class ReportProductDetail (APIView):
         )
         order_id_list = [item.id for item in order]
         report = {}
-
         # find top 10 food and total_price_drink
-
-        filter_product = [
-            product.id for product in Product.objects.filter(type_product=request.data['type_product'])]
-        all_product = OrderItem.objects.filter(
-            product_id__in=filter_product, order_id__in=order_id_list)
-        report = self.id_of_products_sorted(all_product)
+        if request.data['type_product'] == 'topping':
+            all_item = OrderItem.objects.filter(order_id__in=order_id_list)
+            all_item_id = [item.id for item in all_item]
+            all_topping_id = [item.topping_id for item in all_item]
+            all_topping = OrderItemTopping.objects.filter(
+                item_id_in=all_item_id, topping_id_in=all_topping_id
+            )
+            report = self.id_of_topping_sorted(all_topping)
+        else:
+            filter_product = [
+                product.id for product in Product.objects.filter(type_product=request.data['type_product'])]
+            all_product = OrderItem.objects.filter(
+                product_id__in=filter_product, order_id__in=order_id_list)
+            report = self.id_of_products_sorted(all_product)
 
         return Response(report, status=200)
 
