@@ -943,16 +943,17 @@ class ReportProductDetail (APIView):
             all_item_id = [item.id for item in all_item]
             all_topping_id = [item.topping_id for item in all_item]
             all_topping = OrderItemTopping.objects.filter(
-                item_id_in=all_item_id, topping_id_in=all_topping_id
+                item_id__in=all_item_id, topping_id__in=all_topping_id
             )
             report = self.id_of_topping_sorted(all_topping)
+            return Response(report, status=200)
         else:
             filter_product = [
                 product.id for product in Product.objects.filter(type_product=request.data['type_product'])]
             all_product = OrderItem.objects.filter(
                 product_id__in=filter_product, order_id__in=order_id_list)
             report = self.id_of_products_sorted(all_product)
-
+            return Response(report, status=200)
         return Response(report, status=200)
 
 class ReportAllProduct (APIView):
