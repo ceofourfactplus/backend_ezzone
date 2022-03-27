@@ -923,7 +923,7 @@ class ReportToppingDetail(APIView):
         all_item_id = [item.id for item in all_item]
         all_topping_id = [item.topping_id for item in all_item]
         all_topping = OrderItemTopping.objects.filter(
-            item_id__in=all_item_id, topping_id__in=all_topping_id
+            item_id__in=all_item_id
         )
         report = self.id_of_topping_sorted(all_topping)
         return Response(report, status=200)
