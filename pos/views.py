@@ -9,7 +9,7 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from pprint import pprint
 from product.models import Product, SaleChannel, Topping
-from product.serializers import ProductReportSerialiser, ChannelReportSerializer, ProductS
+from product.serializers import ProductReportSerialiser, ChannelReportSerializer, ProductS, ToppingS
 from datetime import datetime
 from promotion.models import PackageItem, PromotionPackage,CustomerPoint
 
@@ -896,7 +896,7 @@ class ReportToppingDetail(APIView):
         id_list = [i for i in toppings.keys()]
         top_data = []
         for i in id_list:
-            serializer = OrderItemToppingSerializer(OrderItemTopping.objects.get(id=i))
+            serializer = ToppingS(Topping.objects.get(id=i))
             all_price.append(int(toppings[i]))
             top_data.append(serializer.data)
         return {'top_products': top_data, 'all_price': all_price}
@@ -923,7 +923,7 @@ class ReportToppingDetail(APIView):
         all_item_id = [item.id for item in all_item]
         all_topping_id = [item.topping_id for item in all_item]
         all_topping = OrderItemTopping.objects.filter(
-            item_id__in=all_item_id
+            item_id__in=all_item_id, topping_id__in=all_topping_id
         )
         report = self.id_of_topping_sorted(all_topping)
         return Response(report, status=200)
