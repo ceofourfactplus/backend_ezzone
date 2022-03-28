@@ -891,7 +891,6 @@ class ReportToppingDetail(APIView):
                 toppings[i.topping_id] = i.price_topping*i.amount
             else:
                 toppings[i.topping_id] += i.price_topping*i.amount
-        print('toppings',toppings)
         toppings = dict(sorted(toppings.items(), key=lambda item: item[1], reverse=True))
         id_list = [i for i in toppings.keys()]
         top_data = []
@@ -902,7 +901,6 @@ class ReportToppingDetail(APIView):
         return {'top_products': top_data, 'all_price': all_price}
 
     def post(self, request):
-        print('request',request.data)
         order = Order.objects.filter(
             create_at__gte=datetime(
                 int(request.data['year_from']),
@@ -921,10 +919,8 @@ class ReportToppingDetail(APIView):
         # find top 10 food and total_price_drink
         all_item = OrderItem.objects.filter(order_id__in=order_id_list)
         all_item_id = [item.id for item in all_item]
-        all_topping_id = [item.topping_id for item in all_item]
         all_topping = OrderItemTopping.objects.filter(
-            item_id__in=all_item_id, topping_id__in=all_topping_id
-        )
+            item_id__in=all_item_id)
         report = self.id_of_topping_sorted(all_topping)
         return Response(report, status=200)
 
