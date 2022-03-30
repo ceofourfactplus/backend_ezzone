@@ -2,7 +2,7 @@ import os
 from django.db.models import Sum, F, Count
 from product.models import SaleChannel
 from pos.models import Order, OrderItem, OrderItemTopping, Payment
-from pos.serializers import OrderSerializer, PaymentSerializer, OrderItemSerializer, OrderItemToppingSerializer
+from pos.serializers import NecOrderSerializer, OrderSerializer, PaymentSerializer, OrderItemSerializer, OrderItemToppingSerializer
 from rest_framework.views import APIView
 from customer.models import Customer, AddressCustomer
 from rest_framework.parsers import FormParser, MultiPartParser
@@ -222,7 +222,7 @@ class TodayOrderList(APIView):
     def get(self, request):
         Orders = Order.objects.filter(
             create_at__gte=datetime.now().date())
-        serializer = OrderSerializer(
+        serializer = NecOrderSerializer(
             Orders, context={'request': request}, many=True)
         return Response(serializer.data)
 
@@ -235,7 +235,7 @@ class DrinkOrderOnGoing(APIView):
     def get(self, request):
         Orders = Order.objects.filter(
             create_at__gte=datetime.now().date(), status_drink__in=[0, 1]).exclude(status_drink=None)
-        serializer = OrderSerializer(
+        serializer = NecOrderSerializer(
             Orders, context={'request': request}, many=True)
         return Response(serializer.data)
 
@@ -253,7 +253,7 @@ class CounterOrderType(APIView):
         elif type == 3:
             order_food = Order.objects.filter(create_at__gte=datetime.now().date(
             ), status_drink=type).exclude(status_order=4).order_by('-create_at')
-        serializer = OrderSerializer(
+        serializer = NecOrderSerializer(
             order_food, context={'request': request}, many=True)
         return Response(serializer.data, status=200)
 
@@ -267,7 +267,7 @@ class CounterOrderToday(APIView):
             create_at__gte=datetime.now().date(), status_drink=1).exclude(status_order=4).count()
         Orders = Order.objects.filter(
             create_at__gte=datetime.now().date(), status_drink__in=[0, 1, 2]).exclude(status_order=4)
-        data['order'] = OrderSerializer(Orders, many=True).data
+        data['order'] = NecOrderSerializer(Orders, many=True).data
         return Response(data, status=200)
 
 
@@ -284,7 +284,7 @@ class KitchenOrderType(APIView):
         elif type == 3:
             order_food = Order.objects.filter(create_at__gte=datetime.now().date(
             ), status_food=type).exclude(status_order=4).order_by('-create_at')
-        serializer = OrderSerializer(
+        serializer = NecOrderSerializer(
             order_food, context={'request': request}, many=True)
         return Response(serializer.data, status=200)
 
@@ -308,7 +308,7 @@ class TodayOrderCompleted(APIView):
     def get(self, request):
         Orders = Order.objects.filter(
             create_at__gte=datetime.now().date(), status_order=3)
-        serializer = OrderSerializer(
+        serializer = NecOrderSerializer(
             Orders, context={'request': request}, many=True)
         return Response(serializer.data)
 
@@ -330,7 +330,7 @@ class TodayOrderOnGoing(APIView):
     def get(self, request):
         Orders = Order.objects.filter(
             create_at__gte=datetime.now().date(), status_order__in=[0, 1, 2])
-        serializer = OrderSerializer(
+        serializer = NecOrderSerializer(
             Orders, context={'request': request}, many=True)
         return Response(serializer.data)
 
@@ -341,7 +341,7 @@ class TodayOrderVoid(APIView):
     def get(self, request):
         Orders = Order.objects.filter(
             create_at__gte=datetime.now().date(), status_order=4)
-        serializer = OrderSerializer(
+        serializer = NecOrderSerializer(
             Orders, context={'request': request}, many=True)
         return Response(serializer.data)
 
@@ -349,7 +349,7 @@ class TodayOrderVoid(APIView):
 class OrderList(APIView):
     def get(self, request):
         Orders = Order.objects.all()
-        serializer = OrderSerializer(Orders, many=True)
+        serializer = NecOrderSerializer(Orders, many=True)
         return Response(serializer.data)
 
     def post(self, request):
