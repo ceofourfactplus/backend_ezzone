@@ -11,7 +11,7 @@ from pprint import pprint
 from product.models import Product, SaleChannel, Topping
 from product.serializers import ProductReportSerialiser, ChannelReportSerializer, ProductS, ToppingS
 from datetime import datetime
-from promotion.models import PackageItem, PromotionPackage,CustomerPoint
+from promotion.models import PackageItem, PromotionPackage, CustomerPoint
 
 
 class cancel_order(APIView):
@@ -70,7 +70,6 @@ def check_is_finish(order_id):
     no_none_status_top_drink_list = [
         s for s in arr_status_top_drink if s != None]
 
-    
     if not (no_none_status_drink_list + no_none_status_top_drink_list) == []:
         order.status_drink = min(
             no_none_status_drink_list + no_none_status_top_drink_list)
@@ -87,8 +86,9 @@ def check_is_finish(order_id):
         order.status_order = 1
     if (order.status_drink == 2 or order.status_drink == None) and (order.status_food == 2 or order.status_food == None):
         order.status_order = 2
-    print('payment status is :',order.payment_status)
-    print('check is :',(order.status_drink == 3 or order.status_drink == None) and (order.status_food == 3 or order.status_food == None) and (order.payment_status == 3 or order.payment_status == 4))
+    print('payment status is :', order.payment_status)
+    print('check is :', (order.status_drink == 3 or order.status_drink == None) and (order.status_food ==
+          3 or order.status_food == None) and (order.payment_status == 3 or order.payment_status == 4))
     if (order.status_drink == 3 or order.status_drink == None) and (order.status_food == 3 or order.status_food == None) and (order.payment_status == 3 or order.payment_status == 4):
         order.status_order = 3
     if (order.status_drink == 4 or order.status_drink == None) and (order.status_food == 4 or order.status_food == None):
@@ -134,7 +134,7 @@ class ChangeStatusOrder(APIView):
                 type_topping__in=type_item)]
             orderitem_top = OrderItem.objects.filter(
                 order_id=pk, topping_id__in=topping)
-        
+
             for item in orderitem_top:
                 item.status_order = status
                 item.save()
@@ -370,16 +370,18 @@ class OrderList(APIView):
                 request.data['customer_id'] = cus.id
                 cus.last_joined = datetime.now()
                 cus.save()
-                if not(request.data['point_promotion_id'] == None ):
-                    if CustomerPoint.objects.filter(customer_id=request.data['customer_id'],point_promotion_id=request.data['point_promotion_id']).exists():
-                        cus_point = CustomerPoint.objects.get(customer_id=request.data['customer_id'],point_promotion_id=request.data['point_promotion_id'])
+                if not(request.data['point_promotion_id'] == None):
+                    if CustomerPoint.objects.filter(customer_id=request.data['customer_id'], point_promotion_id=request.data['point_promotion_id']).exists():
+                        cus_point = CustomerPoint.objects.get(
+                            customer_id=request.data['customer_id'], point_promotion_id=request.data['point_promotion_id'])
                         cus_point.point += request.data['point']
                         print('customer point 666')
                         cus_point.save()
                     else:
                         print('customer point')
-                        CustomerPoint.objects.create(customer_id=request.data['customer_id'],point_promotion_id=request.data['point_promotion_id'],point = request.data['point'])
-                        
+                        CustomerPoint.objects.create(
+                            customer_id=request.data['customer_id'], point_promotion_id=request.data['point_promotion_id'], point=request.data['point'])
+
                 # check address
                 if not request.data['address'] == "":
                     if AddressCustomer.objects.filter(customer_id=request.data['customer_id'], address=request.data['address']).exists():
@@ -393,9 +395,10 @@ class OrderList(APIView):
             else:
                 request.data['customer_id'] = Customer.objects.create(
                     phone_number=request.data['phone_number'], nick_name=request.data['nick_name']).id
-                
-                if not(request.data['point_promotion_id'] == None ):
-                    CustomerPoint.objects.create(customer_id=request.data['customer_id'],point_promotion_id=request.data['point_promotion_id'],point = request.data['point'])
+
+                if not(request.data['point_promotion_id'] == None):
+                    CustomerPoint.objects.create(
+                        customer_id=request.data['customer_id'], point_promotion_id=request.data['point_promotion_id'], point=request.data['point'])
                 if not request.data['address'] == "":
                     request.data['address_id'] = AddressCustomer.objects.create(
                         address=request.data['address'], customer_id=request.data['customer_id']).id
@@ -435,7 +438,7 @@ class OrderList(APIView):
         for item in request.data['orderitem_set']:
             if 'package' in item:
                 for i in item['package_set']['packageitem_set']:
-                    
+
                     data = {
                         "code": i['product_set']['name'],
                         "flavour_level": 2,
@@ -445,15 +448,15 @@ class OrderList(APIView):
                         "size": "M",
                         "description": "",
                         "amount": i['qty'],
-                        'item_in_package':True,
-                        'orderitemtopping_set':[]
-                        } 
+                        'item_in_package': True,
+                        'orderitemtopping_set': []
+                    }
                     for t in i['itemtopping_set']:
                         data['orderitemtopping_set'].append({
-                            'topping':t['topping'],    
-                            'price_topping':0,
-                            "total_price":0,
-                            "amount":t['qty']
+                            'topping': t['topping'],
+                            'price_topping': 0,
+                            "total_price": 0,
+                            "amount": t['qty']
                         })
                     request.data['orderitem_set'].append(data)
                 print(request.data['orderitem_set'])
@@ -509,6 +512,7 @@ class TempOrderItemList(APIView):
         # for i in product_combined:
         #     products.append(product_combined[i])
         return Response(serializer.data)
+
 
 class OrderItemList(APIView):
     def get(self, request):
@@ -681,7 +685,9 @@ class ReportDaily (APIView):
 
     def get(self, request):
         order = Order.objects.filter(
-            create_at__gte=datetime.now().date())
+            create_at__gte=datetime.now().date()).exclude(
+            status_order=Order.VOID
+        )
         order_id_list = [item.id for item in order]
         report = order.aggregate(Sum('total_balance'), Sum('discount'))
         report['total_order'] = order.count()
@@ -757,6 +763,8 @@ class ReportFilterByDate (APIView):
                 int(request.data['month_to']),
                 int(request.data['day_to'])
             )
+        ).exclude(
+            status_order=Order.VOID
         )
         order_id_list = [item.id for item in order]
         report = order.aggregate(Sum('total_balance'), Sum('discount'))
@@ -822,7 +830,9 @@ class ReportMonth (APIView):
     def get(self, request):
         now = datetime.now()
         order = Order.objects.filter(
-            create_at__gte=datetime(now.year, now.month, 1))
+            create_at__gte=datetime(now.year, now.month, 1)).exclude(
+            status_order=Order.VOID
+        )
         order_id_list = [item.id for item in order]
         report = order.aggregate(Sum('total_balance'), Sum('discount'))
         report['total_order'] = order.count()
@@ -880,6 +890,7 @@ class ReportMonth (APIView):
 
         return Response(report, status=200)
 
+
 class ReportToppingDetail(APIView):
     parser_classes = [FormParser, MultiPartParser]
 
@@ -891,7 +902,8 @@ class ReportToppingDetail(APIView):
                 toppings[i.topping_id] = i.price_topping*i.amount
             else:
                 toppings[i.topping_id] += i.price_topping*i.amount
-        toppings = dict(sorted(toppings.items(), key=lambda item: item[1], reverse=True))
+        toppings = dict(
+            sorted(toppings.items(), key=lambda item: item[1], reverse=True))
         id_list = [i for i in toppings.keys()]
         top_data = []
         for i in id_list:
@@ -924,9 +936,10 @@ class ReportToppingDetail(APIView):
         report = self.id_of_topping_sorted(all_topping)
         return Response(report, status=200)
 
+
 class ReportProductDetail (APIView):
     parser_classes = [FormParser, MultiPartParser]
-    
+
     def id_of_products_sorted(self, arr):
         products = {}
         all_price = []
@@ -934,9 +947,9 @@ class ReportProductDetail (APIView):
             if not products.get(i.product_id):
                 products[i.product_id] = i.price_item*i.amount
             else:
-                products[i.product_id] += i.price_item*i.amount
-        print('products',products)
-        products = dict(sorted(products.items(), key=lambda item: item[1], reverse=True))
+                products[i.product_id] += i.price_item
+        products = dict(
+            sorted(products.items(), key=lambda item: item[1], reverse=True))
         id_list = [i for i in products.keys()]
         top_data = []
         for i in id_list:
@@ -946,7 +959,7 @@ class ReportProductDetail (APIView):
         return {'top_products': top_data, 'all_price': all_price}
 
     def post(self, request):
-        print('request',request.data)
+        print('request', request.data)
         order = Order.objects.filter(
             create_at__gte=datetime(
                 int(request.data['year_from']),
@@ -970,9 +983,10 @@ class ReportProductDetail (APIView):
         report = self.id_of_products_sorted(all_product)
         return Response(report, status=200)
 
+
 class ReportAllProduct (APIView):
     parser_classes = [FormParser, MultiPartParser]
-    
+
     def id_of_products_sorted(self, request, arr):
         products = {}
         for i in arr:
@@ -980,8 +994,10 @@ class ReportAllProduct (APIView):
             if not products.get(i.product_id):
                 products[i.product_id] = i.amount
             else:
+                print(i.amount)
                 products[i.product_id] += i.amount
-        products = dict(sorted(products.items(), key=lambda item: item[1], reverse=True))
+        products = dict(
+            sorted(products.items(), key=lambda item: item[1], reverse=True))
         id_list = [i for i in products.keys()]
         top_data = []
         for i in id_list[:10]:
@@ -990,7 +1006,7 @@ class ReportAllProduct (APIView):
         return ProductReportSerialiser(top_data, context={'request': request}, many=True).data
 
     def post(self, request):
-        print('request', request.data)  
+        print('request', request.data)
         order = Order.objects.filter(
             create_at__gte=datetime(
                 int(request.data['year_from']),
@@ -1007,8 +1023,6 @@ class ReportAllProduct (APIView):
         order_id_list = [item.id for item in order]
         report = {}
 
-        # find top 10 food and total_price_drink
-
         filter_food = [
             product.id for product in Product.objects.filter(type_product=3)]
         all_food = OrderItem.objects.filter(
@@ -1017,7 +1031,6 @@ class ReportAllProduct (APIView):
         report['total_price_food'] = all_food.aggregate(
             Sum('total_price'))['total_price__sum']
 
-        # find top 10 drink and total_sale_drink
         filter_drink = [
             product.id for product in Product.objects.filter(type_product=2)]
         all_drink = OrderItem.objects.filter(
@@ -1031,7 +1044,8 @@ class ReportAllProduct (APIView):
             product.id for product in Product.objects.filter(type_product=1)]
         all_dressert = OrderItem.objects.filter(
             product_id__in=filter_dressert, order_id__in=order_id_list)
-        report['top_dressert'] = self.id_of_products_sorted(request, all_dressert)
+        report['top_dressert'] = self.id_of_products_sorted(
+            request, all_dressert)
         report['total_price_dressert'] = all_dressert.aggregate(Sum('total_price'))[
             'total_price__sum']
 
@@ -1052,4 +1066,3 @@ class delete_all_order(APIView):
         Order.objects.all().delete()
         Customer.objects.all().delete()
         return Response('oj')
-
