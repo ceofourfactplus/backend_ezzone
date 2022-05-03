@@ -69,6 +69,41 @@ class OrderItemSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ('order',)
 
+class NecOrderSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=False)
+    payment_id = serializers.IntegerField(required=True, allow_null=True)
+    payment_set = PaymentSerializer(read_only=True, source="payment")
+    status_order = serializers.IntegerField(required=False, allow_null=True)
+    status_food = serializers.IntegerField(required=False, allow_null=True)
+    status_drink = serializers.IntegerField(required=False, allow_null=True)
+    create_at = serializers.DateTimeField(required=False, allow_null=True) 
+    table = serializers.IntegerField(required=False, allow_null=True)
+    sale_channel_set = GetterSaleChannel(
+        read_only=True, source="sale_channel")
+    orderitem_set = OrderItemSerializer(many=True) 
+    class Meta:
+        model = Order
+        fields = [            
+            "orderitem_set",     
+            "total_balance",
+            "sale_channel_set",
+            "sale_channel_id",
+            'payment_set',
+            "payment_id",
+            "id",
+            "table",
+            "order_number",
+            "status_delivery",
+            "status_food",
+            "status_drink",
+            "total_price",
+            "status_order",
+            "payment_status",
+            "create_by",
+            "update_by",
+            "create_at",
+            "update_at",
+        ]
 
 class OrderSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False)

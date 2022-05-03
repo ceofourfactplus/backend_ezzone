@@ -2,14 +2,14 @@ import os
 from django.db.models import Sum, F, Count
 from product.models import SaleChannel
 from pos.models import Order, OrderItem, OrderItemTopping, Payment
-from pos.serializers import OrderSerializer, PaymentSerializer, OrderItemSerializer, OrderItemToppingSerializer
+from pos.serializers import NecOrderSerializer, OrderSerializer, PaymentSerializer, OrderItemSerializer, OrderItemToppingSerializer
 from rest_framework.views import APIView
 from customer.models import Customer, AddressCustomer
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from pprint import pprint
 from product.models import Product, SaleChannel, Topping
-from product.serializers import ProductReportSerialiser, ChannelReportSerializer, ProductS
+from product.serializers import ProductReportSerialiser, ChannelReportSerializer, ProductS, ToppingS
 from datetime import datetime
 from promotion.models import PackageItem, PromotionPackage, CustomerPoint
 
@@ -222,7 +222,7 @@ class TodayOrderList(APIView):
     def get(self, request):
         Orders = Order.objects.filter(
             create_at__gte=datetime.now().date())
-        serializer = OrderSerializer(
+        serializer = NecOrderSerializer(
             Orders, context={'request': request}, many=True)
         return Response(serializer.data)
 
@@ -235,7 +235,7 @@ class DrinkOrderOnGoing(APIView):
     def get(self, request):
         Orders = Order.objects.filter(
             create_at__gte=datetime.now().date(), status_drink__in=[0, 1]).exclude(status_drink=None)
-        serializer = OrderSerializer(
+        serializer = NecOrderSerializer(
             Orders, context={'request': request}, many=True)
         return Response(serializer.data)
 
@@ -253,7 +253,7 @@ class CounterOrderType(APIView):
         elif type == 3:
             order_food = Order.objects.filter(create_at__gte=datetime.now().date(
             ), status_drink=type).exclude(status_order=4).order_by('-create_at')
-        serializer = OrderSerializer(
+        serializer = NecOrderSerializer(
             order_food, context={'request': request}, many=True)
         return Response(serializer.data, status=200)
 
@@ -267,7 +267,7 @@ class CounterOrderToday(APIView):
             create_at__gte=datetime.now().date(), status_drink=1).exclude(status_order=4).count()
         Orders = Order.objects.filter(
             create_at__gte=datetime.now().date(), status_drink__in=[0, 1, 2]).exclude(status_order=4)
-        data['order'] = OrderSerializer(Orders, many=True).data
+        data['order'] = NecOrderSerializer(Orders, many=True).data
         return Response(data, status=200)
 
 
@@ -284,7 +284,7 @@ class KitchenOrderType(APIView):
         elif type == 3:
             order_food = Order.objects.filter(create_at__gte=datetime.now().date(
             ), status_food=type).exclude(status_order=4).order_by('-create_at')
-        serializer = OrderSerializer(
+        serializer = NecOrderSerializer(
             order_food, context={'request': request}, many=True)
         return Response(serializer.data, status=200)
 
@@ -308,7 +308,7 @@ class TodayOrderCompleted(APIView):
     def get(self, request):
         Orders = Order.objects.filter(
             create_at__gte=datetime.now().date(), status_order=3)
-        serializer = OrderSerializer(
+        serializer = NecOrderSerializer(
             Orders, context={'request': request}, many=True)
         return Response(serializer.data)
 
@@ -330,7 +330,7 @@ class TodayOrderOnGoing(APIView):
     def get(self, request):
         Orders = Order.objects.filter(
             create_at__gte=datetime.now().date(), status_order__in=[0, 1, 2])
-        serializer = OrderSerializer(
+        serializer = NecOrderSerializer(
             Orders, context={'request': request}, many=True)
         return Response(serializer.data)
 
@@ -341,7 +341,7 @@ class TodayOrderVoid(APIView):
     def get(self, request):
         Orders = Order.objects.filter(
             create_at__gte=datetime.now().date(), status_order=4)
-        serializer = OrderSerializer(
+        serializer = NecOrderSerializer(
             Orders, context={'request': request}, many=True)
         return Response(serializer.data)
 
@@ -349,7 +349,7 @@ class TodayOrderVoid(APIView):
 class OrderList(APIView):
     def get(self, request):
         Orders = Order.objects.all()
-        serializer = OrderSerializer(Orders, many=True)
+        serializer = NecOrderSerializer(Orders, many=True)
         return Response(serializer.data)
 
     def post(self, request):
@@ -889,6 +889,52 @@ class ReportMonth (APIView):
         return Response(report, status=200)
 
 
+class ReportToppingDetail(APIView):
+    parser_classes = [FormParser, MultiPartParser]
+
+    def id_of_topping_sorted(self, arr):
+        toppings = {}
+        all_price = []
+        for i in arr:
+            if not toppings.get(i.topping_id):
+                toppings[i.topping_id] = i.price_topping*i.amount
+            else:
+                toppings[i.topping_id] += i.price_topping*i.amount
+        toppings = dict(
+            sorted(toppings.items(), key=lambda item: item[1], reverse=True))
+        id_list = [i for i in toppings.keys()]
+        top_data = []
+        for i in id_list:
+            serializer = ToppingS(Topping.objects.get(id=i))
+            all_price.append(int(toppings[i]))
+            top_data.append(serializer.data)
+        return {'top_products': top_data, 'all_price': all_price}
+
+    def post(self, request):
+        order = Order.objects.filter(
+            create_at__gte=datetime(
+                int(request.data['year_from']),
+                int(request.data['month_from']),
+                int(request.data['day_from'])
+            )
+        ).filter(
+            create_at__lte=datetime(
+                int(request.data['year_to']),
+                int(request.data['month_to']),
+                int(request.data['day_to'])
+            )
+        )
+        order_id_list = [item.id for item in order]
+        report = {}
+        # find top 10 food and total_price_drink
+        all_item = OrderItem.objects.filter(order_id__in=order_id_list)
+        all_item_id = [item.id for item in all_item]
+        all_topping = OrderItemTopping.objects.filter(
+            item_id__in=all_item_id)
+        report = self.id_of_topping_sorted(all_topping)
+        return Response(report, status=200)
+
+
 class ReportProductDetail (APIView):
     parser_classes = [FormParser, MultiPartParser]
 
@@ -897,20 +943,16 @@ class ReportProductDetail (APIView):
         all_price = []
         for i in arr:
             if not products.get(i.product_id):
-                products[i.product_id] = i.price_item
+                products[i.product_id] = i.price_item*i.amount
             else:
                 products[i.product_id] += i.price_item
         products = dict(
             sorted(products.items(), key=lambda item: item[1], reverse=True))
         id_list = [i for i in products.keys()]
-        print('products', products)
         top_data = []
         for i in id_list:
             serializer = ProductS(Product.objects.get(id=i))
             all_price.append(int(products[i]))
-            print('prod', i, products)
-            print(type(serializer.data))
-            print('serializer', serializer.data)
             top_data.append(serializer.data)
         return {'top_products': top_data, 'all_price': all_price}
 
@@ -931,15 +973,12 @@ class ReportProductDetail (APIView):
         )
         order_id_list = [item.id for item in order]
         report = {}
-
         # find top 10 food and total_price_drink
-
         filter_product = [
             product.id for product in Product.objects.filter(type_product=request.data['type_product'])]
         all_product = OrderItem.objects.filter(
             product_id__in=filter_product, order_id__in=order_id_list)
         report = self.id_of_products_sorted(all_product)
-
         return Response(report, status=200)
 
 
@@ -949,6 +988,7 @@ class ReportAllProduct (APIView):
     def id_of_products_sorted(self, request, arr):
         products = {}
         for i in arr:
+            print(f'amo {i.product_id} ,', i.amount)
             if not products.get(i.product_id):
                 products[i.product_id] = i.amount
             else:
@@ -960,6 +1000,7 @@ class ReportAllProduct (APIView):
         top_data = []
         for i in id_list[:10]:
             top_data.append(Product.objects.get(id=i))
+        print(top_data)
         return ProductReportSerialiser(top_data, context={'request': request}, many=True).data
 
     def post(self, request):

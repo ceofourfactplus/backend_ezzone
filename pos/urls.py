@@ -31,6 +31,7 @@ urlpatterns = [
     path('report/monthly', views.ReportMonth.as_view()),
     path('report/all-product', views.ReportAllProduct.as_view()),
     path('report/product-detail', views.ReportProductDetail.as_view()),
+    path('report/topping-detail', views.ReportToppingDetail.as_view()),
     path('order-number', views.GetOrderNumber.as_view()),
     path('delete_order_all', views.delete_all_order.as_view()),
     path('change-status-order/<str:where>/<int:all_order>/<int:status>/<int:pk>',
