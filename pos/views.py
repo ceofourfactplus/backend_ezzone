@@ -685,7 +685,9 @@ class ReportDaily (APIView):
 
     def get(self, request):
         order = Order.objects.filter(
-            create_at__gte=datetime.now().date())
+            create_at__gte=datetime.now().date()).exclude(
+            status_order=Order.VOID
+        )
         order_id_list = [item.id for item in order]
         report = order.aggregate(Sum('total_balance'), Sum('discount'))
         report['total_order'] = order.count()
