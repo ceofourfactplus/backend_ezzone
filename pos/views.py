@@ -972,6 +972,8 @@ class ReportProductDetail (APIView):
                 int(request.data['month_to']),
                 int(request.data['day_to'])
             )
+        ).exclude(
+            status_order=Order.VOID
         )
         order_id_list = [item.id for item in order]
         report = {}
@@ -1019,6 +1021,8 @@ class ReportAllProduct (APIView):
                 int(request.data['month_to']),
                 int(request.data['day_to'])
             )
+        ).exclude(
+            status_order=Order.VOID
         )
         order_id_list = [item.id for item in order]
         report = {}
