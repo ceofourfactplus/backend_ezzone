@@ -749,79 +749,39 @@ class ReportDaily (APIView):
 class ReportFilterByDate (APIView):
     parser_classes = [FormParser, MultiPartParser]
 
-    def post(self, request):
-        print(request.data, 'report request')
-        order = Order.objects.filter(
-            create_at__gte=datetime(
-                int(request.data['year_from']),
-                int(request.data['month_from']),
-                int(request.data['day_from'])
-            )
-        ).filter(
-            create_at__lte=datetime(
-                int(request.data['year_to']),
-                int(request.data['month_to']),
-                int(request.data['day_to'])
-            )
-        ).exclude(
-            status_order=Order.VOID
-        )
-        order_id_list = [item.id for item in order]
-        report = order.aggregate(Sum('total_balance'), Sum('discount'))
-        report['total_order'] = order.count()
-        report['total_cash'] = order.filter(
-            payment_status=3).aggregate(Sum('total_balance'))['total_balance__sum']
-        report['total_transfer'] = order.filter(
-            payment_status=4).aggregate(Sum('total_balance'))['total_balance__sum']
-        report['total_customer'] = order.filter(
-            customer_id__isnull=False).values('customer_id').distinct().count()
-        all_channel_id = [channel.id for channel in SaleChannel.objects.all()]
-        total_price = []
-        for channel_id in all_channel_id:
-            total_balance = order.filter(sale_channel_id=channel_id).aggregate(
-                Sum('total_balance'))['total_balance__sum']
-            total_price.append({
-                'total_price': total_balance,
-                'sale_channel_set': ChannelReportSerializer(SaleChannel.objects.get(id=channel_id), context={'request': request}).data,
-            })
-        report['sale_channel_total_price'] = total_price
-        # find top food
-        filter_food = [
-            product.id for product in Product.objects.filter(type_product=3)]
-        all_food = OrderItem.objects.filter(
-            product_id__in=filter_food, order_id__in=order_id_list)
-        top_food = all_food.annotate(frequency=Count('product_id')).order_by(
-            'frequency').values('product_id').distinct()[:3]
-        list_food = [t['product_id'] for t in top_food]
-        top_product_data = Product.objects.filter(id__in=list_food)
-        report['top_food'] = ProductReportSerialiser(
-            top_product_data, many=True).data
+    def get(self, request):
+        query = request.query_params
+        filter_order = Order.objects.filter(create_at__gte=datetime.strptime(
+            query['date_from'], '%Y-%m-%d')).filter(create_at__lte=datetime.strptime(query['date_to'], '%Y-%m-%d'))
 
-        # find top drink
-        filter_drink = [
-            product.id for product in Product.objects.filter(type_product=2)]
-        all_drink = OrderItem.objects.filter(
-            product_id__in=filter_drink, order_id__in=order_id_list)
-        top_drink = all_drink.annotate(frequency=Count('product_id')).order_by(
-            'frequency').values('product_id').distinct()[:3]
-        list_drink = [t['product_id'] for t in top_drink]
-        top_drink_data = Product.objects.filter(id__in=list_drink)
-        report['top_drink'] = ProductReportSerialiser(
-            top_drink_data, many=True).data
-
-        # find top dressert
-        filter_dressert = [
-            product.id for product in Product.objects.filter(type_product=1)]
-        all_dressert = OrderItem.objects.filter(
-            product_id__in=filter_dressert, order_id__in=order_id_list)
-        top_dressert = all_dressert.annotate(frequency=Count('product_id')).order_by(
-            'frequency').values('product_id').distinct()[:3]
-        list_dressert = [t['product_id'] for t in top_dressert]
-        top_dressert_data = Product.objects.filter(id__in=list_dressert)
-        report['top_dressert'] = ProductReportSerialiser(
-            top_dressert_data, many=True).data
-
-        return Response(report, status=200)
+        order_id = [item.id for item in filter_order]
+        filter_order_item = OrderItem.objects.filter(order_id__in=order_id)
+        if 'category' in query.keys():
+            product_in_category = Product.objects.filter(
+                category_id=query['category'])
+            product_id = [item.id for item in product_in_category]
+            filter_order_item = OrderItem.objects.filter(
+                product_id__in=product_id)
+        order_item_list = OrderItemSerializer(filter_order_item, many=True)
+        report_list = []
+        for order_item in order_item_list.data:
+            already = False
+            for report_item in report_list:
+                if report_item['id'] == order_item['product']:
+                    already = True
+                    report_item['amount'] += order_item['amount']
+                    report_item['price'] += float(
+                        order_item['total_price'])
+            if not already:
+                report_list.append({
+                    "id": order_item['product'],
+                    "name": order_item['product_set']['name'],
+                    "amount": order_item['amount'],
+                    "price": float(order_item['total_price'])
+                })
+        print(report_list)
+        # return Response('hello')
+        return Response(report_list)
 
 
 class ReportMonth (APIView):
