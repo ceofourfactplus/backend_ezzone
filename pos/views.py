@@ -760,7 +760,7 @@ class ReportFilterByDate (APIView):
             product_in_category = Product.objects.filter(
                 category_id=query['category'])
             product_id = [item.id for item in product_in_category]
-            filter_order_item = OrderItem.objects.filter(
+            filter_order_item = filter_order_item.filter(
                 product_id__in=product_id)
         order_item_list = OrderItemSerializer(filter_order_item, many=True)
         report_list = []
