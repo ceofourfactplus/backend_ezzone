@@ -773,12 +773,16 @@ class ReportFilterByDate (APIView):
                     report_item['price'] += float(
                         order_item['total_price'])
             if not already:
-                report_list.append({
-                    "id": order_item['product'],
-                    "name": order_item['product_set']['name'],
-                    "amount": order_item['amount'],
-                    "price": float(order_item['total_price'])
-                })
+                try:
+                    report_list.append({
+                        "id": order_item['product'],
+                        "name": order_item['product_set']['name'],
+                        "amount": order_item['amount'],
+                        "price": float(order_item['total_price'])
+                    })
+                except:
+                    print('fail')
+
         print(report_list)
         # return Response('hello')
         return Response(report_list)
