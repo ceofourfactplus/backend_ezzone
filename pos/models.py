@@ -1,11 +1,12 @@
 
 from collections import defaultdict
+from ctypes import addressof
 from django.db import models
 from customer.models import AddressCustomer
 from promotion.models import PromotionPackage, Voucher, PointPromotion
 from product.models import SaleChannel, Product, Topping
 from backend.settings import AUTH_USER_MODEL
-from customer.models import Customer
+from customer.models import Customer, AddressCustomer
 from consignment.models import ConsignmentProduct
 
 from django.utils.translation import gettext_lazy as _
@@ -164,3 +165,14 @@ class OrderItemTopping(models.Model):
     price_topping = models.DecimalField(max_digits=7, decimal_places=2)
     total_price = models.DecimalField(max_digits=7, decimal_places=2)
     amount = models.IntegerField()
+
+class DeliveryMan(models.Model):
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    nick_name = models.CharField(max_length=100)
+    delivery_times = models.IntegerField()
+
+class DeliveryTransaction(models.Model):
+    delivery_man = models.ForeignKey(DeliveryMan, on_delete=models.PROTECT, null=True, default=None)
+    address = models.ForeignKey(AddressCustomer, on_delete=models.PROTECT, null=True, default=None)
+    create_at = models.DateTimeField(auto_now_add=True)

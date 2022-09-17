@@ -45,12 +45,14 @@ INSTALLED_APPS = [
     'pos',
     'product',
     'rest_framework',
+    'dynamic_rest',
     'raw_material',
     'material',
     'customer',
     'consignment',
     'promotion',
     'user',
+    'store',
 ]
 
 CORS_ORIGIN_ALLOW_ALL = True
@@ -92,15 +94,12 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 import pymysql
 
-env = environ.Env()
-environ.Env.read_env()
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql', 
-        'NAME': env('DATABASE_NAME'),
-        'USER': env('DATABASE_USER'),
-        'PASSWORD': env('DATABASE_PASS'),
+        'NAME': 'ezzone',
+        'USER': 'root',
+        'PASSWORD': 'notthebestbutbetter',
         'HOST': 'localhost',
         'PORT': '3306',
     }
@@ -151,6 +150,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'dynamic_rest.renderers.DynamicBrowsableAPIRenderer',
     )
 }
 

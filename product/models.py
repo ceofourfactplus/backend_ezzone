@@ -94,6 +94,7 @@ class Topping(models.Model):
         AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="topping_update_by", 
         null=True, blank=True, default=None)
     create_at = models.DateTimeField(auto_now_add=True)
+    total_times = models.IntegerField(default=1)
 
 class PriceTopping(models.Model):
     status = models.BooleanField(default=True)
@@ -125,6 +126,7 @@ class ProductCategory(models.Model):
         AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="product_category_create_by")
     update_by = models.ForeignKey(
         AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="product_category_update_by", null=True, blank=True)
+    total_times = models.IntegerField(default=1)
 
 
 class Product(models.Model):
@@ -188,6 +190,7 @@ class Product(models.Model):
         null=True, blank=True, default=None)
     create_at = models.DateTimeField(auto_now_add=True)
     update_at = models.DateTimeField(null=True, blank=True, default=None)
+    total_times = models.IntegerField(default=1)
 
 
 class AddProduct(models.Model):

@@ -28,6 +28,9 @@ class Supplier(models.Model):
     google_map = models.URLField(max_length=400, default='')
     create_at = models.DateTimeField(auto_now_add=True)
     last_update = models.DateTimeField(blank=True, null=True)
+    number_of_orders = models.IntegerField(null=True, blank=True, default=None)
+    all_expenses = models.DecimalField(
+        max_digits=7, decimal_places=2, default=None, null=True, blank=True)
     create_by = models.ForeignKey(
         AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="supplier_create_by")
     update_by = models.ForeignKey(AUTH_USER_MODEL, on_delete=models.PROTECT,

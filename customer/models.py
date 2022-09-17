@@ -1,5 +1,7 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from product.models import Product, Topping
+
 
 
 def upload_to_customer(instance,filename):
@@ -19,6 +21,8 @@ class Customer(models.Model):
     invited_by = models.ForeignKey('self',on_delete=models.PROTECT,null=True,blank=True,default=None)
     date_joined = models.DateTimeField(auto_now_add=True)
     last_joined = models.DateTimeField(auto_now_add=True,null=True,blank=True)
+    total_purchase = models.DecimalField(decimal_places=5,max_digits=5,null=True,blank=True)
+    total_purchase_amount = models.IntegerField(default=1)
     
 class AddressCustomer(models.Model):
     HOME = 1
@@ -33,6 +37,16 @@ class AddressCustomer(models.Model):
     customer = models.ForeignKey(Customer,on_delete=models.CASCADE)
     status_address = models.IntegerField(choices=STATUS_ADDRESS,default=HOME)
     status = models.BooleanField(default=True) 
+
+class CustomerTransaction(models.Model):
+    product = models.ForeignKey(
+        Product, on_delete=models.PROTECT, null=True, default=None)
+    topping = models.ForeignKey(
+        Topping, on_delete=models.PROTECT, null=True, default=None)
+    customer = models.ForeignKey(
+        Customer, on_delete=models.PROTECT, null=True, default=None)   
+    amount = models.IntegerField(default=1)
+    total_price = models.DecimalField(decimal_places=5,max_digits=5)
     
 # class LevelCustomer(models.Model):
 #     level = models.CharField
