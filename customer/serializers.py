@@ -17,28 +17,8 @@ class CustomerImageSerializer(serializers.ModelSerializer):
 
 
 class CustomerSerializer(serializers.ModelSerializer):
-    addresscustomer_set = AddressCustomerSerializer(many=True, read_only=True)
-    email = serializers.CharField(required=False, allow_blank=True)
-    birth_date = serializers.DateField(required=False, allow_null=True)
-    img = serializers.ImageField(read_only=True)
-    invited_by = serializers.PrimaryKeyRelatedField(allow_null=True,queryset=Customer.objects.all())
-    last_name = serializers.CharField(required=False, allow_blank=True)
-    first_name = serializers.CharField(required=False, allow_blank=True)
-
-    class Meta:
+       class Meta:
         model = Customer
-        fields = [
-            'id',
-            'nick_name',
-            'first_name',
-            'last_name',
-            'phone_number',
-            'gender',
-            'img', 'email',
-            'addresscustomer_set',
-            'birth_date',
-            'line_customer_id',
-            'invited_by',
-            'date_joined',
-            'last_joined'
-        ]
+        fields = '__all__'
+
+    invited_by = DynamicRelationField('CustomerSerializer', embed=True) 

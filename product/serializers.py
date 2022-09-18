@@ -13,8 +13,38 @@ from promotion.models import PricePackage, PromotionPackage
 from promotion.serializers import PackageListSerializer
 from promotion.models import PackageItem, PromotionPackage, ItemTopping
 
+class SaleChannelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SaleChannel
+        fields = '__all__'
+
+class ProductCategorySerializer(DynamicModelSerializer):
+    class Meta:
+        model = ProductCategory
+        name = 'product_category'
+        fields = '__all__'
+
 class ProductListSerializer(DynamicModelSerializer):
     class Meta:
         model = Product
         name = 'product'
-        fields = ("img", )
+        fields = ("id", "img", "name", "total_times")
+
+class ProductSerializer(DynamicModelSerializer):
+    class Meta:
+        model = Product
+        name = 'product'
+        fields = '__all__'
+
+    unit = DynamicRelationField('UnitSerializer', embed=True) 
+    category = DynamicRelationField('ProductCategorySerializer', embed=True) 
+    sale_chanenl = DynamicRelationField('ProductCategorySerializer', embed=True) 
+
+class ToppingSerializer(DynamicModelSerializer):
+    class Meta:
+        model = Topping
+        name = 'topping'
+        fields = '__all__'
+
+    unit = DynamicRelationField('UnitSerializer', embed=True) 
+
